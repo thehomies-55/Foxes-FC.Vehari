@@ -1,0 +1,332 @@
+{
+  "entities": {
+    "EditorGrant": {
+      "title": "EditorGrant",
+      "description": "Manager-authorized editor permission record keyed by normalized lowercase email.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 160, "description": "Authorized editor email address." },
+        "displayName": { "type": "string", "maxLength": 80, "description": "Optional name of the authorized editor." },
+        "grantedByUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "displayName", "grantedByUid", "createdAt"]
+    },
+    "Player": {
+      "title": "Player",
+      "description": "Foxes FC squad member with separated external and inter-club match statistics.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "age": { "type": "integer" },
+        "jerseyNumber": { "type": "integer" },
+        "position": { "type": "string", "enum": ["GK", "CB", "LB", "RB", "LWB", "RWB", "DEF", "CDM", "CM", "CAM", "LM", "RM", "MID", "LW", "RW", "CF", "ST", "FWD"] },
+        "photoUrl": { "type": "string", "maxLength": 200000 },
+        "extGames": { "type": "integer" },
+        "extGoals": { "type": "integer" },
+        "extAssists": { "type": "integer" },
+        "extRatingSum": { "type": "number" },
+        "extPenalties": { "type": "integer" },
+        "extRedCards": { "type": "integer" },
+        "extYellowCards": { "type": "integer" },
+        "extPotm": { "type": "integer" },
+        "extCleanSheets": { "type": "integer" },
+        "icGames": { "type": "integer" },
+        "icGoals": { "type": "integer" },
+        "icAssists": { "type": "integer" },
+        "icRatingSum": { "type": "number" },
+        "icPenalties": { "type": "integer" },
+        "icRedCards": { "type": "integer" },
+        "icYellowCards": { "type": "integer" },
+        "icPotm": { "type": "integer" },
+        "icCleanSheets": { "type": "integer" },
+        "hatTricks": { "type": "integer" },
+        "bestSingleGameGoals": { "type": "integer" },
+        "bestSingleGameAssists": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "name", "age", "jerseyNumber", "position", "photoUrl",
+        "extGames", "extGoals", "extAssists", "extRatingSum", "extPenalties", "extRedCards", "extYellowCards", "extPotm", "extCleanSheets",
+        "icGames", "icGoals", "icAssists", "icRatingSum", "icPenalties", "icRedCards", "icYellowCards", "icPotm", "icCleanSheets",
+        "hatTricks", "bestSingleGameGoals", "bestSingleGameAssists", "createdAt", "updatedAt"
+      ]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Scheduled fixture or completed match result including external and inter-club matches.",
+      "type": "object",
+      "properties": {
+        "matchType": { "type": "string", "enum": ["external", "inter_club"] },
+        "opponentName": { "type": "string", "maxLength": 80 },
+        "subTeamA": { "type": "string", "maxLength": 60 },
+        "subTeamB": { "type": "string", "maxLength": 60 },
+        "dateDisplay": { "type": "string", "maxLength": 20 },
+        "timeDisplay": { "type": "string", "maxLength": 20 },
+        "dateIso": { "type": "string", "maxLength": 30 },
+        "venue": { "type": "string", "maxLength": 120 },
+        "status": { "type": "string", "enum": ["scheduled", "completed"] },
+        "goalsFor": { "type": "integer" },
+        "goalsAgainst": { "type": "integer" },
+        "subTeamAScore": { "type": "integer" },
+        "subTeamBScore": { "type": "integer" },
+        "seriesId": { "type": "string", "maxLength": 128 },
+        "competitionName": { "type": "string", "maxLength": 80 },
+        "performances": { "type": "array" },
+        "suggestedPotmId": { "type": "string", "maxLength": 128 },
+        "suggestedPotmName": { "type": "string", "maxLength": 80 },
+        "suggestedPotmReason": { "type": "string", "maxLength": 200 },
+        "officialPotmId": { "type": "string", "maxLength": 128 },
+        "officialPotmName": { "type": "string", "maxLength": 80 },
+        "createdByUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "matchType", "opponentName", "subTeamA", "subTeamB", "dateDisplay", "timeDisplay", "dateIso", "venue",
+        "status", "goalsFor", "goalsAgainst", "subTeamAScore", "subTeamBScore", "seriesId", "competitionName",
+        "performances", "suggestedPotmId", "suggestedPotmName", "suggestedPotmReason", "officialPotmId", "officialPotmName",
+        "createdByUid", "createdAt", "updatedAt"
+      ]
+    },
+    "SeriesEvent": {
+      "title": "SeriesEvent",
+      "description": "Tournament, bilateral series, tri-series, or inter-club series with individual awards.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 100 },
+        "category": { "type": "string", "enum": ["tournament", "bilateral", "triseries", "inter_club"] },
+        "format": { "type": "string", "enum": ["round_robin", "knockout", "hybrid", "legged"] },
+        "roundRobinMeetings": { "type": "integer", "enum": [1, 2, 3] },
+        "hybridGroupSize": { "type": "integer", "enum": [2, 3, 4, 5] },
+        "teams": { "type": "array" },
+        "winnerName": { "type": "string", "maxLength": 80 },
+        "tournamentMatches": { "type": "array" },
+        "tournamentType": { "type": "string", "maxLength": 60, "description": "Specific tournament or series format label." },
+        "teamsSummary": { "type": "string", "maxLength": 160 },
+        "placement": { "type": "string", "enum": ["1st", "2nd", "3rd", "ongoing", "participated"] },
+        "startDate": { "type": "string", "maxLength": 30 },
+        "endDate": { "type": "string", "maxLength": 30 },
+        "status": { "type": "string", "enum": ["ongoing", "completed"] },
+        "suggestedPotsId": { "type": "string", "maxLength": 128 },
+        "suggestedPotsName": { "type": "string", "maxLength": 80 },
+        "officialPotsId": { "type": "string", "maxLength": 128 },
+        "officialPotsName": { "type": "string", "maxLength": 80 },
+        "topScorerName": { "type": "string", "maxLength": 80 },
+        "topScorerStat": { "type": "string", "maxLength": 40 },
+        "topAssisterName": { "type": "string", "maxLength": 80 },
+        "topAssisterStat": { "type": "string", "maxLength": 40 },
+        "bestKeeperName": { "type": "string", "maxLength": 80 },
+        "bestDefenderName": { "type": "string", "maxLength": 80 },
+        "summary": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "title", "category", "teamsSummary", "placement", "startDate", "endDate", "status",
+        "suggestedPotsId", "suggestedPotsName", "officialPotsId", "officialPotsName",
+        "topScorerName", "topScorerStat", "topAssisterName", "topAssisterStat",
+        "bestKeeperName", "bestDefenderName", "summary", "createdAt", "updatedAt"
+      ]
+    },
+    "NewsPost": {
+      "title": "NewsPost",
+      "description": "Official club report or announcement published by Manager or authorized editor.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "minLength": 2, "maxLength": 140 },
+        "category": { "type": "string", "enum": ["Match Report", "Club Announcement", "Squad Update", "Tournament"] },
+        "body": { "type": "string", "minLength": 5, "maxLength": 4000 },
+        "photoUrl": { "type": "string", "maxLength": 250000 },
+        "authorName": { "type": "string", "maxLength": 80 },
+        "authorUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "publishedDate": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "category", "body", "authorName", "authorUid", "publishedDate", "createdAt", "updatedAt"]
+    },
+    "DisciplineIncident": {
+      "title": "DisciplineIncident",
+      "description": "Disciplinary card, misbehavior, or match no-show fine record in PKR.",
+      "type": "object",
+      "properties": {
+        "playerId": { "type": "string", "maxLength": 128 },
+        "playerName": { "type": "string", "maxLength": 80 },
+        "matchLabel": { "type": "string", "maxLength": 100 },
+        "reason": { "type": "string", "enum": ["yellow_card", "red_card", "misbehavior", "no_show"] },
+        "finePkr": { "type": "integer" },
+        "status": { "type": "string", "enum": ["pending", "paid"] },
+        "notes": { "type": "string", "maxLength": 240 },
+        "incidentDate": { "type": "string", "maxLength": 30 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["playerId", "playerName", "matchLabel", "reason", "finePkr", "status", "notes", "incidentDate", "createdAt", "updatedAt"]
+    },
+    "DiscordMessage": {
+      "title": "DiscordMessage",
+      "description": "Community Discord chat message split into IG-verified club-members chat and open fan-and-player chat.",
+      "type": "object",
+      "properties": {
+        "channel": { "type": "string", "enum": ["club-members", "open-fan-chat"] },
+        "text": { "type": "string", "minLength": 1, "maxLength": 1000 },
+        "authorUid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "authorName": { "type": "string", "maxLength": 80 },
+        "authorRole": { "type": "string", "enum": ["manager", "editor", "member", "fan"] },
+        "verifiedIgHandle": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["channel", "text", "authorUid", "authorName", "authorRole", "verifiedIgHandle", "createdAt"]
+    },
+    "IgVerifiedHandle": {
+      "title": "IgVerifiedHandle",
+      "description": "Normalized Instagram handle saved by the Manager for club member verification in Discord Type 1.",
+      "type": "object",
+      "properties": {
+        "handleKey": { "type": "string", "maxLength": 80, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "playerName": { "type": "string", "maxLength": 80 },
+        "active": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["handleKey", "playerName", "active", "updatedAt"]
+    },
+    "ManagerIgConfig": {
+      "title": "ManagerIgConfig",
+      "description": "Manager-only host Instagram ID configuration.",
+      "type": "object",
+      "properties": {
+        "hostInstagramId": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["hostInstagramId", "updatedAt"]
+    },
+    "PlayerIgContact": {
+      "title": "PlayerIgContact",
+      "description": "Manager-only player Instagram handle directory for direct match reminders.",
+      "type": "object",
+      "properties": {
+        "playerId": { "type": "string", "maxLength": 128 },
+        "playerName": { "type": "string", "maxLength": 80 },
+        "instagramId": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["playerId", "playerName", "instagramId", "updatedAt"]
+    },
+    "IgAlertLog": {
+      "title": "IgAlertLog",
+      "description": "Manager-only log of Instagram DM match reminders dispatched by Fox.",
+      "type": "object",
+      "properties": {
+        "matchId": { "type": "string", "maxLength": 128 },
+        "matchLabel": { "type": "string", "maxLength": 120 },
+        "playerId": { "type": "string", "maxLength": 128 },
+        "playerName": { "type": "string", "maxLength": 80 },
+        "recipientIgId": { "type": "string", "maxLength": 80 },
+        "hostIgId": { "type": "string", "maxLength": 80 },
+        "messageText": { "type": "string", "maxLength": 800 },
+        "sentAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["matchId", "matchLabel", "playerId", "playerName", "recipientIgId", "hostIgId", "messageText", "sentAt"]
+    },
+    "ClubTrophyConfig": {
+      "title": "ClubTrophyConfig",
+      "description": "Club historical trophy counts and baseline adjustments managed by the Manager.",
+      "type": "object",
+      "properties": {
+        "firstPlaceBonus": { "type": "integer" },
+        "secondPlaceBonus": { "type": "integer" },
+        "thirdPlaceBonus": { "type": "integer" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["firstPlaceBonus", "secondPlaceBonus", "thirdPlaceBonus", "updatedAt"]
+    },
+    "ClubProfileConfig": {
+      "title": "ClubProfileConfig",
+      "description": "Club identity settings (name, short name, founding date, logo, home ground, slogan, website theme) managed by the Manager.",
+      "type": "object",
+      "properties": {
+        "clubName": { "type": "string", "minLength": 2, "maxLength": 80 },
+        "shortName": { "type": "string", "minLength": 2, "maxLength": 20 },
+        "foundingDate": { "type": "string", "minLength": 2, "maxLength": 40 },
+        "logoUrl": { "type": "string", "maxLength": 300000 },
+        "homeGround": { "type": "string", "minLength": 2, "maxLength": 120 },
+        "clubSlogan": { "type": "string", "maxLength": 140 },
+        "websiteTheme": {
+          "type": "string",
+          "enum": ["obsidian_orange", "midnight_emerald", "royal_navy", "crimson_slate", "light_ivory"]
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["clubName", "shortName", "foundingDate", "logoUrl", "homeGround", "updatedAt"]
+    },
+    "UserPrivateProfile": {
+      "title": "UserPrivateProfile",
+      "description": "Private user account record isolating PII email and linked verified IG handle.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "maxLength": 160 },
+        "displayName": { "type": "string", "maxLength": 80 },
+        "verifiedIgHandle": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "displayName", "verifiedIgHandle", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/editors/{editorEmail}": {
+      "schema": { "$ref": "#/entities/EditorGrant" },
+      "description": "Manager-assigned editor permission records."
+    },
+    "/players/{playerId}": {
+      "schema": { "$ref": "#/entities/Player" },
+      "description": "Squad roster with external and inter-club statistics."
+    },
+    "/matches/{matchId}": {
+      "schema": { "$ref": "#/entities/Match" },
+      "description": "Match fixtures, results, performances, and POTM assignments."
+    },
+    "/series/{seriesId}": {
+      "schema": { "$ref": "#/entities/SeriesEvent" },
+      "description": "Tournaments, bilateral series, tri-series, and inter-club series."
+    },
+    "/news/{newsId}": {
+      "schema": { "$ref": "#/entities/NewsPost" },
+      "description": "Club news reports and official announcements."
+    },
+    "/disciplineIncidents/{incidentId}": {
+      "schema": { "$ref": "#/entities/DisciplineIncident" },
+      "description": "Yellow/red cards, misbehavior, and no-show PKR fine records."
+    },
+    "/discordMessages/{messageId}": {
+      "schema": { "$ref": "#/entities/DiscordMessage" },
+      "description": "Two-type Discord messages: IG-verified club-members chat and open fan chat."
+    },
+    "/igVerifiedHandles/{handleKey}": {
+      "schema": { "$ref": "#/entities/IgVerifiedHandle" },
+      "description": "Normalized club Instagram handles saved by Manager for Discord Type 1 verification."
+    },
+    "/managerIgConfig/{docId}": {
+      "schema": { "$ref": "#/entities/ManagerIgConfig" },
+      "description": "Manager-only Fox Instagram host ID settings."
+    },
+    "/playerIgDirectory/{playerId}": {
+      "schema": { "$ref": "#/entities/PlayerIgContact" },
+      "description": "Manager-only player Instagram handle directory."
+    },
+    "/igAlertLogs/{logId}": {
+      "schema": { "$ref": "#/entities/IgAlertLog" },
+      "description": "Manager-only Instagram match alert dispatch logs."
+    },
+    "/clubConfig/{configId}": {
+      "schema": { "$ref": "#/entities/ClubProfileConfig" },
+      "description": "Club profile branding (/clubConfig/profile) and historical trophy count configuration (/clubConfig/trophies)."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserPrivateProfile" },
+      "description": "Private user account records isolated by owner UID."
+    }
+  }
+}

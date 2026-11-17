@@ -1,0 +1,532 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core primitives
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidEmailId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 160 && id.matches('^[a-zA-Z0-9._%+\\-]+@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isManager() {
+      return isVerified() && (
+        request.auth.token.email == 'thehomies1358@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isEditor() {
+      return isVerified() &&
+        request.auth.token.email != null &&
+        exists(/databases/$(database)/documents/editors/$(request.auth.token.email.lower()));
+    }
+
+    function isEditorOrManager() {
+      return isManager() || isEditor();
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    // Validation helpers
+    function isValidEditorGrant(data) {
+      return data.keys().hasAll(['email', 'displayName', 'grantedByUid', 'createdAt']) &&
+        data.keys().hasOnly(['email', 'displayName', 'grantedByUid', 'createdAt']) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.displayName is string && data.displayName.size() <= 80 &&
+        isValidId(data.grantedByUid) &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidPlayer(data) {
+      return data.keys().hasAll([
+          'name', 'age', 'jerseyNumber', 'position', 'photoUrl',
+          'extGames', 'extGoals', 'extAssists', 'extRatingSum', 'extPenalties', 'extRedCards', 'extYellowCards', 'extPotm', 'extCleanSheets',
+          'icGames', 'icGoals', 'icAssists', 'icRatingSum', 'icPenalties', 'icRedCards', 'icYellowCards', 'icPotm', 'icCleanSheets',
+          'hatTricks', 'bestSingleGameGoals', 'bestSingleGameAssists', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'name', 'age', 'jerseyNumber', 'position', 'photoUrl',
+          'extGames', 'extGoals', 'extAssists', 'extRatingSum', 'extPenalties', 'extRedCards', 'extYellowCards', 'extPotm', 'extCleanSheets',
+          'icGames', 'icGoals', 'icAssists', 'icRatingSum', 'icPenalties', 'icRedCards', 'icYellowCards', 'icPotm', 'icCleanSheets',
+          'hatTricks', 'bestSingleGameGoals', 'bestSingleGameAssists', 'createdAt', 'updatedAt'
+        ]) &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 80 &&
+        data.age is int && data.age >= 10 && data.age <= 65 &&
+        data.jerseyNumber is int && data.jerseyNumber >= 1 && data.jerseyNumber <= 99 &&
+        data.position in ['GK', 'CB', 'LB', 'RB', 'LWB', 'RWB', 'DEF', 'CDM', 'CM', 'CAM', 'LM', 'RM', 'MID', 'LW', 'RW', 'CF', 'ST', 'FWD'] &&
+        data.photoUrl is string && data.photoUrl.size() <= 200000 &&
+        data.extGames is int && data.extGames >= 0 &&
+        data.extGoals is int && data.extGoals >= 0 &&
+        data.extAssists is int && data.extAssists >= 0 &&
+        (data.extRatingSum is int || data.extRatingSum is float) && data.extRatingSum >= 0 &&
+        data.extPenalties is int && data.extPenalties >= 0 &&
+        data.extRedCards is int && data.extRedCards >= 0 &&
+        data.extYellowCards is int && data.extYellowCards >= 0 &&
+        data.extPotm is int && data.extPotm >= 0 &&
+        data.extCleanSheets is int && data.extCleanSheets >= 0 &&
+        data.icGames is int && data.icGames >= 0 &&
+        data.icGoals is int && data.icGoals >= 0 &&
+        data.icAssists is int && data.icAssists >= 0 &&
+        (data.icRatingSum is int || data.icRatingSum is float) && data.icRatingSum >= 0 &&
+        data.icPenalties is int && data.icPenalties >= 0 &&
+        data.icRedCards is int && data.icRedCards >= 0 &&
+        data.icYellowCards is int && data.icYellowCards >= 0 &&
+        data.icPotm is int && data.icPotm >= 0 &&
+        data.icCleanSheets is int && data.icCleanSheets >= 0 &&
+        data.hatTricks is int && data.hatTricks >= 0 &&
+        data.bestSingleGameGoals is int && data.bestSingleGameGoals >= 0 &&
+        data.bestSingleGameAssists is int && data.bestSingleGameAssists >= 0 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidMatch(data) {
+      return data.keys().hasAll([
+          'matchType', 'opponentName', 'subTeamA', 'subTeamB', 'dateDisplay', 'timeDisplay', 'dateIso', 'venue',
+          'status', 'goalsFor', 'goalsAgainst', 'subTeamAScore', 'subTeamBScore', 'seriesId', 'competitionName',
+          'performances', 'suggestedPotmId', 'suggestedPotmName', 'suggestedPotmReason', 'officialPotmId', 'officialPotmName',
+          'createdByUid', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'matchType', 'opponentName', 'subTeamA', 'subTeamB', 'dateDisplay', 'timeDisplay', 'dateIso', 'venue',
+          'status', 'goalsFor', 'goalsAgainst', 'subTeamAScore', 'subTeamBScore', 'seriesId', 'competitionName',
+          'performances', 'suggestedPotmId', 'suggestedPotmName', 'suggestedPotmReason', 'officialPotmId', 'officialPotmName',
+          'createdByUid', 'createdAt', 'updatedAt'
+        ]) &&
+        data.matchType in ['external', 'inter_club'] &&
+        data.opponentName is string && data.opponentName.size() <= 80 &&
+        data.subTeamA is string && data.subTeamA.size() <= 60 &&
+        data.subTeamB is string && data.subTeamB.size() <= 60 &&
+        data.dateDisplay is string && data.dateDisplay.size() >= 1 && data.dateDisplay.size() <= 20 &&
+        data.timeDisplay is string && data.timeDisplay.size() >= 1 && data.timeDisplay.size() <= 20 &&
+        data.dateIso is string && data.dateIso.size() >= 1 && data.dateIso.size() <= 30 &&
+        data.venue is string && data.venue.size() >= 1 && data.venue.size() <= 120 &&
+        data.status in ['scheduled', 'completed'] &&
+        data.goalsFor is int && data.goalsFor >= 0 && data.goalsFor <= 99 &&
+        data.goalsAgainst is int && data.goalsAgainst >= 0 && data.goalsAgainst <= 99 &&
+        data.subTeamAScore is int && data.subTeamAScore >= 0 && data.subTeamAScore <= 99 &&
+        data.subTeamBScore is int && data.subTeamBScore >= 0 && data.subTeamBScore <= 99 &&
+        data.seriesId is string && data.seriesId.size() <= 128 &&
+        data.competitionName is string && data.competitionName.size() <= 80 &&
+        data.performances is list && data.performances.size() <= 30 &&
+        (data.performances.size() == 0 || data.performances[0] is map) &&
+        data.suggestedPotmId is string && data.suggestedPotmId.size() <= 128 &&
+        data.suggestedPotmName is string && data.suggestedPotmName.size() <= 80 &&
+        data.suggestedPotmReason is string && data.suggestedPotmReason.size() <= 200 &&
+        data.officialPotmId is string && data.officialPotmId.size() <= 128 &&
+        data.officialPotmName is string && data.officialPotmName.size() <= 80 &&
+        isValidId(data.createdByUid) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidSeries(data) {
+      return data.keys().hasAll([
+          'title', 'category', 'teamsSummary', 'placement', 'startDate', 'endDate', 'status',
+          'suggestedPotsId', 'suggestedPotsName', 'officialPotsId', 'officialPotsName',
+          'topScorerName', 'topScorerStat', 'topAssisterName', 'topAssisterStat',
+          'bestKeeperName', 'bestDefenderName', 'summary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'title', 'category', 'format', 'roundRobinMeetings', 'hybridGroupSize', 'teams', 'winnerName', 'tournamentMatches',
+          'tournamentType', 'teamsSummary', 'placement', 'startDate', 'endDate', 'status',
+          'suggestedPotsId', 'suggestedPotsName', 'officialPotsId', 'officialPotsName',
+          'topScorerName', 'topScorerStat', 'topAssisterName', 'topAssisterStat',
+          'bestKeeperName', 'bestDefenderName', 'summary', 'createdAt', 'updatedAt'
+        ]) &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 100 &&
+        data.category in ['tournament', 'bilateral', 'triseries', 'inter_club'] &&
+        (!('format' in data.keys()) || data.format in ['round_robin', 'knockout', 'hybrid', 'legged']) &&
+        (!('roundRobinMeetings' in data.keys()) || data.roundRobinMeetings in [1, 2, 3]) &&
+        (!('hybridGroupSize' in data.keys()) || data.hybridGroupSize in [2, 3, 4, 5]) &&
+        (!('teams' in data.keys()) || (data.teams is list && data.teams.size() <= 32 && (data.teams.size() == 0 || data.teams[0] is string))) &&
+        (!('winnerName' in data.keys()) || (data.winnerName is string && data.winnerName.size() <= 80)) &&
+        (!('tournamentMatches' in data.keys()) || (data.tournamentMatches is list && data.tournamentMatches.size() <= 150 && (data.tournamentMatches.size() == 0 || data.tournamentMatches[0] is map))) &&
+        (!('tournamentType' in data.keys()) || (data.tournamentType is string && data.tournamentType.size() <= 60)) &&
+        data.teamsSummary is string && data.teamsSummary.size() <= 160 &&
+        data.placement in ['1st', '2nd', '3rd', 'ongoing', 'participated'] &&
+        data.startDate is string && data.startDate.size() <= 30 &&
+        data.endDate is string && data.endDate.size() <= 30 &&
+        data.status in ['ongoing', 'completed'] &&
+        data.suggestedPotsId is string && data.suggestedPotsId.size() <= 128 &&
+        data.suggestedPotsName is string && data.suggestedPotsName.size() <= 80 &&
+        data.officialPotsId is string && data.officialPotsId.size() <= 128 &&
+        data.officialPotsName is string && data.officialPotsName.size() <= 80 &&
+        data.topScorerName is string && data.topScorerName.size() <= 80 &&
+        data.topScorerStat is string && data.topScorerStat.size() <= 40 &&
+        data.topAssisterName is string && data.topAssisterName.size() <= 80 &&
+        data.topAssisterStat is string && data.topAssisterStat.size() <= 40 &&
+        data.bestKeeperName is string && data.bestKeeperName.size() <= 80 &&
+        data.bestDefenderName is string && data.bestDefenderName.size() <= 80 &&
+        data.summary is string && data.summary.size() <= 500 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidNews(data) {
+      return data.keys().hasAll(['title', 'category', 'body', 'authorName', 'authorUid', 'publishedDate', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['title', 'category', 'body', 'photoUrl', 'authorName', 'authorUid', 'publishedDate', 'createdAt', 'updatedAt']) &&
+        data.title is string && data.title.size() >= 2 && data.title.size() <= 140 &&
+        data.category in ['Match Report', 'Club Announcement', 'Squad Update', 'Tournament'] &&
+        data.body is string && data.body.size() >= 5 && data.body.size() <= 4000 &&
+        (!('photoUrl' in data.keys()) || (data.photoUrl is string && data.photoUrl.size() <= 250000)) &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80 &&
+        isValidId(data.authorUid) &&
+        data.publishedDate is string && data.publishedDate.size() >= 1 && data.publishedDate.size() <= 30 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidIncident(data) {
+      return data.keys().hasAll(['playerId', 'playerName', 'matchLabel', 'reason', 'finePkr', 'status', 'notes', 'incidentDate', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['playerId', 'playerName', 'matchLabel', 'reason', 'finePkr', 'status', 'notes', 'incidentDate', 'createdAt', 'updatedAt']) &&
+        data.playerId is string && data.playerId.size() <= 128 &&
+        data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 80 &&
+        data.matchLabel is string && data.matchLabel.size() <= 100 &&
+        data.reason in ['yellow_card', 'red_card', 'misbehavior', 'no_show'] &&
+        data.finePkr in [50, 100, 200] &&
+        data.status in ['pending', 'paid'] &&
+        data.notes is string && data.notes.size() <= 240 &&
+        data.incidentDate is string && data.incidentDate.size() <= 30 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidDiscordMessage(data) {
+      return data.keys().hasAll(['channel', 'text', 'authorUid', 'authorName', 'authorRole', 'verifiedIgHandle', 'createdAt']) &&
+        data.keys().hasOnly(['channel', 'text', 'authorUid', 'authorName', 'authorRole', 'verifiedIgHandle', 'createdAt']) &&
+        data.channel in ['club-members', 'open-fan-chat'] &&
+        data.text is string && data.text.size() >= 1 && data.text.size() <= 1000 &&
+        isValidId(data.authorUid) &&
+        data.authorName is string && data.authorName.size() >= 1 && data.authorName.size() <= 80 &&
+        data.authorRole in ['manager', 'editor', 'member', 'fan'] &&
+        data.verifiedIgHandle is string && data.verifiedIgHandle.size() <= 80 &&
+        data.createdAt is timestamp;
+    }
+
+    function isValidIgVerifiedHandle(data) {
+      return data.keys().hasAll(['handleKey', 'playerName', 'active', 'updatedAt']) &&
+        data.keys().hasOnly(['handleKey', 'playerName', 'active', 'updatedAt']) &&
+        isValidId(data.handleKey) &&
+        data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 80 &&
+        data.active is bool &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidManagerIgConfig(data) {
+      return data.keys().hasAll(['hostInstagramId', 'updatedAt']) &&
+        data.keys().hasOnly(['hostInstagramId', 'updatedAt']) &&
+        data.hostInstagramId is string && data.hostInstagramId.size() >= 2 && data.hostInstagramId.size() <= 80 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidPlayerIgContact(data) {
+      return data.keys().hasAll(['playerId', 'playerName', 'instagramId', 'updatedAt']) &&
+        data.keys().hasOnly(['playerId', 'playerName', 'instagramId', 'updatedAt']) &&
+        isValidId(data.playerId) &&
+        data.playerName is string && data.playerName.size() >= 1 && data.playerName.size() <= 80 &&
+        data.instagramId is string && data.instagramId.size() >= 2 && data.instagramId.size() <= 80 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidIgAlertLog(data) {
+      return data.keys().hasAll(['matchId', 'matchLabel', 'playerId', 'playerName', 'recipientIgId', 'hostIgId', 'messageText', 'sentAt']) &&
+        data.keys().hasOnly(['matchId', 'matchLabel', 'playerId', 'playerName', 'recipientIgId', 'hostIgId', 'messageText', 'sentAt']) &&
+        data.matchId is string && data.matchId.size() <= 128 &&
+        data.matchLabel is string && data.matchLabel.size() <= 120 &&
+        data.playerId is string && data.playerId.size() <= 128 &&
+        data.playerName is string && data.playerName.size() <= 80 &&
+        data.recipientIgId is string && data.recipientIgId.size() <= 80 &&
+        data.hostIgId is string && data.hostIgId.size() <= 80 &&
+        data.messageText is string && data.messageText.size() >= 10 && data.messageText.size() <= 800 &&
+        data.sentAt is timestamp;
+    }
+
+    function isValidClubTrophyConfig(data) {
+      return data.keys().hasAll(['firstPlaceBonus', 'secondPlaceBonus', 'thirdPlaceBonus', 'updatedAt']) &&
+        data.keys().hasOnly(['firstPlaceBonus', 'secondPlaceBonus', 'thirdPlaceBonus', 'updatedAt']) &&
+        data.firstPlaceBonus is int && data.firstPlaceBonus >= 0 &&
+        data.secondPlaceBonus is int && data.secondPlaceBonus >= 0 &&
+        data.thirdPlaceBonus is int && data.thirdPlaceBonus >= 0 &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidClubProfileConfig(data) {
+      return data.keys().hasAll(['clubName', 'shortName', 'foundingDate', 'logoUrl', 'homeGround', 'updatedAt']) &&
+        data.keys().hasOnly(['clubName', 'shortName', 'foundingDate', 'logoUrl', 'homeGround', 'clubSlogan', 'websiteTheme', 'updatedAt']) &&
+        data.clubName is string && data.clubName.size() >= 2 && data.clubName.size() <= 80 &&
+        data.shortName is string && data.shortName.size() >= 2 && data.shortName.size() <= 20 &&
+        data.foundingDate is string && data.foundingDate.size() >= 2 && data.foundingDate.size() <= 40 &&
+        data.logoUrl is string && data.logoUrl.size() <= 300000 &&
+        data.homeGround is string && data.homeGround.size() >= 2 && data.homeGround.size() <= 120 &&
+        (!('clubSlogan' in data.keys()) || (data.clubSlogan is string && data.clubSlogan.size() <= 140)) &&
+        (!('websiteTheme' in data.keys()) || data.websiteTheme in ['obsidian_orange', 'midnight_emerald', 'royal_navy', 'crimson_slate', 'light_ivory']) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'verifiedIgHandle', 'createdAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'verifiedIgHandle', 'createdAt']) &&
+        isValidId(data.uid) &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 160 &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+        data.verifiedIgHandle is string && data.verifiedIgHandle.size() <= 80 &&
+        data.createdAt is timestamp;
+    }
+
+    // Admins collection
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && isValidId(adminUid) && (request.auth.uid == adminUid || isManager());
+      allow list: if isManager();
+      allow write: if false;
+    }
+
+    // Editors collection
+    match /editors/{editorEmail} {
+      allow get: if isManager() || (isVerified() && request.auth.token.email != null && request.auth.token.email.lower() == editorEmail);
+      allow list: if isManager();
+      allow create: if isManager() && isValidEmailId(editorEmail) && isValidEditorGrant(incoming()) &&
+        incoming().grantedByUid == request.auth.uid && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isManager() && isValidEmailId(editorEmail);
+    }
+
+    // Public Club Squad & Stats
+    match /players/{playerId} {
+      allow read: if true;
+      allow create: if isEditorOrManager() && isValidId(playerId) && isValidPlayer(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isEditorOrManager() && isValidId(playerId) && isValidPlayer(incoming()) &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'age', 'jerseyNumber', 'position', 'photoUrl',
+          'extGames', 'extGoals', 'extAssists', 'extRatingSum', 'extPenalties', 'extRedCards', 'extYellowCards', 'extPotm', 'extCleanSheets',
+          'icGames', 'icGoals', 'icAssists', 'icRatingSum', 'icPenalties', 'icRedCards', 'icYellowCards', 'icPotm', 'icCleanSheets',
+          'hatTricks', 'bestSingleGameGoals', 'bestSingleGameAssists', 'updatedAt'
+        ]);
+      allow delete: if isManager() && isValidId(playerId);
+    }
+
+    // Matches & Fixtures (POTM restricted strictly to Manager)
+    match /matches/{matchId} {
+      allow read: if true;
+      allow create: if isEditorOrManager() && isValidId(matchId) && isValidMatch(incoming()) &&
+        incoming().createdByUid == request.auth.uid &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        (isManager() || (incoming().officialPotmId == '' && incoming().officialPotmName == ''));
+      allow update: if isEditorOrManager() && isValidId(matchId) && isValidMatch(incoming()) &&
+        incoming().createdByUid == existing().createdByUid &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          (isManager() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'matchType', 'opponentName', 'subTeamA', 'subTeamB', 'dateDisplay', 'timeDisplay', 'dateIso', 'venue',
+            'status', 'goalsFor', 'goalsAgainst', 'subTeamAScore', 'subTeamBScore', 'seriesId', 'competitionName',
+            'performances', 'suggestedPotmId', 'suggestedPotmName', 'suggestedPotmReason', 'officialPotmId', 'officialPotmName', 'updatedAt'
+          ])) ||
+          (isEditor() && incoming().officialPotmId == existing().officialPotmId && incoming().officialPotmName == existing().officialPotmName &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'matchType', 'opponentName', 'subTeamA', 'subTeamB', 'dateDisplay', 'timeDisplay', 'dateIso', 'venue',
+              'status', 'goalsFor', 'goalsAgainst', 'subTeamAScore', 'subTeamBScore', 'seriesId', 'competitionName',
+              'performances', 'suggestedPotmId', 'suggestedPotmName', 'suggestedPotmReason', 'updatedAt'
+            ]))
+        );
+      allow delete: if isManager() && isValidId(matchId);
+    }
+
+    // Tournaments & Series (POTS restricted strictly to Manager)
+    match /series/{seriesId} {
+      allow read: if true;
+      allow create: if isEditorOrManager() && isValidId(seriesId) && isValidSeries(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time &&
+        (isManager() || (incoming().officialPotsId == '' && incoming().officialPotsName == ''));
+      allow update: if isEditorOrManager() && isValidId(seriesId) && isValidSeries(incoming()) &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time &&
+        (
+          (isManager() && incoming().diff(existing()).affectedKeys().hasOnly([
+            'title', 'category', 'format', 'roundRobinMeetings', 'hybridGroupSize', 'teams', 'winnerName', 'tournamentMatches',
+            'tournamentType', 'teamsSummary', 'placement', 'startDate', 'endDate', 'status',
+            'suggestedPotsId', 'suggestedPotsName', 'officialPotsId', 'officialPotsName',
+            'topScorerName', 'topScorerStat', 'topAssisterName', 'topAssisterStat',
+            'bestKeeperName', 'bestDefenderName', 'summary', 'updatedAt'
+          ])) ||
+          (isEditor() && incoming().officialPotsId == existing().officialPotsId && incoming().officialPotsName == existing().officialPotsName &&
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'title', 'category', 'format', 'roundRobinMeetings', 'hybridGroupSize', 'teams', 'winnerName', 'tournamentMatches',
+              'tournamentType', 'teamsSummary', 'placement', 'startDate', 'endDate', 'status',
+              'suggestedPotsId', 'suggestedPotsName',
+              'topScorerName', 'topScorerStat', 'topAssisterName', 'topAssisterStat',
+              'bestKeeperName', 'bestDefenderName', 'summary', 'updatedAt'
+            ]))
+        );
+      allow delete: if isManager() && isValidId(seriesId);
+    }
+
+    // News & Club Reports
+    match /news/{newsId} {
+      allow read: if true;
+      allow create: if isEditorOrManager() && isValidId(newsId) && isValidNews(incoming()) &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isEditorOrManager() && isValidId(newsId) && isValidNews(incoming()) &&
+        incoming().authorUid == existing().authorUid &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'body', 'photoUrl', 'publishedDate', 'updatedAt']);
+      allow delete: if isEditorOrManager() && isValidId(newsId);
+    }
+
+    // Discipline & PKR Fines
+    match /disciplineIncidents/{incidentId} {
+      allow read: if true;
+      allow create: if isEditorOrManager() && isValidId(incidentId) && isValidIncident(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isEditorOrManager() && isValidId(incidentId) && isValidIncident(incoming()) &&
+        incoming().createdAt == existing().createdAt && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['status', 'notes', 'finePkr', 'updatedAt']);
+      allow delete: if isManager() && isValidId(incidentId);
+    }
+
+    // Club Historical Trophy Config & Club Profile Branding Config
+    match /clubConfig/{configId} {
+      allow read: if true;
+      allow create: if isManager() && isValidId(configId) && incoming().updatedAt == request.time && (
+        (configId == 'trophies' && isValidClubTrophyConfig(incoming())) ||
+        (configId == 'profile' && isValidClubProfileConfig(incoming()))
+      );
+      allow update: if isManager() && isValidId(configId) && incoming().updatedAt == request.time && (
+        (
+          configId == 'trophies' &&
+          isValidClubTrophyConfig(incoming()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['firstPlaceBonus', 'secondPlaceBonus', 'thirdPlaceBonus', 'updatedAt'])
+        ) ||
+        (
+          configId == 'profile' &&
+          isValidClubProfileConfig(incoming()) &&
+          incoming().diff(existing()).affectedKeys().hasOnly(['clubName', 'shortName', 'foundingDate', 'logoUrl', 'homeGround', 'clubSlogan', 'websiteTheme', 'updatedAt'])
+        )
+      );
+      allow delete: if false;
+    }
+
+    // Two-Type Discord Chat:
+    // Type 1 (club-members): Only members whose Instagram ID is saved in website (or Manager) can chat
+    // Type 2 (open-fan-chat): Any verified signed-in visitor (fan or club player) can chat
+    match /discordMessages/{messageId} {
+      allow read: if true;
+      allow create: if isVerified() && isValidId(messageId) && isValidDiscordMessage(incoming()) &&
+        incoming().authorUid == request.auth.uid &&
+        incoming().createdAt == request.time &&
+        (
+          (
+            incoming().channel == 'open-fan-chat' &&
+            (
+              (incoming().authorRole == 'manager' && isManager()) ||
+              (incoming().authorRole == 'editor' && isEditorOrManager()) ||
+              (incoming().authorRole in ['member', 'fan'])
+            )
+          ) ||
+          (
+            incoming().channel == 'club-members' &&
+            (
+              (incoming().authorRole == 'manager' && isManager()) ||
+              (
+                incoming().authorRole in ['editor', 'member'] &&
+                incoming().verifiedIgHandle != '' &&
+                exists(/databases/$(database)/documents/igVerifiedHandles/$(incoming().verifiedIgHandle)) &&
+                get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verifiedIgHandle == incoming().verifiedIgHandle
+              )
+            )
+          )
+        );
+      allow update: if false;
+      allow delete: if isValidId(messageId) && (isManager() || (isVerified() && existing().authorUid == request.auth.uid));
+    }
+
+    // Verified IG Handles lookup (single-doc get only for handle verification; no list scraping)
+    match /igVerifiedHandles/{handleKey} {
+      allow get: if isVerified() && isValidId(handleKey);
+      allow list: if isManager();
+      allow create: if isManager() && isValidId(handleKey) && isValidIgVerifiedHandle(incoming()) &&
+        incoming().handleKey == handleKey && incoming().updatedAt == request.time;
+      allow update: if isManager() && isValidId(handleKey) && isValidIgVerifiedHandle(incoming()) &&
+        incoming().handleKey == existing().handleKey && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['playerName', 'active', 'updatedAt']);
+      allow delete: if isManager() && isValidId(handleKey);
+    }
+
+    // Manager-Only Instagram Config, Player IG Handles & Alert Logs
+    match /managerIgConfig/{docId} {
+      allow read: if isManager() && isValidId(docId);
+      allow create: if isManager() && isValidId(docId) && isValidManagerIgConfig(incoming()) && incoming().updatedAt == request.time;
+      allow update: if isManager() && isValidId(docId) && isValidManagerIgConfig(incoming()) && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['hostInstagramId', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    match /playerIgDirectory/{playerId} {
+      allow get: if isManager() && isValidId(playerId);
+      allow list: if isManager();
+      allow create: if isManager() && isValidId(playerId) && isValidPlayerIgContact(incoming()) &&
+        incoming().playerId == playerId && incoming().updatedAt == request.time;
+      allow update: if isManager() && isValidId(playerId) && isValidPlayerIgContact(incoming()) &&
+        incoming().playerId == existing().playerId && incoming().updatedAt == request.time &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['playerName', 'instagramId', 'updatedAt']);
+      allow delete: if isManager() && isValidId(playerId);
+    }
+
+    match /igAlertLogs/{logId} {
+      allow get: if isManager() && isValidId(logId);
+      allow list: if isManager();
+      allow create: if isManager() && isValidId(logId) && isValidIgAlertLog(incoming()) && incoming().sentAt == request.time;
+      allow update: if false;
+      allow delete: if isManager() && isValidId(logId);
+    }
+
+    // Private User Profile (PII isolated + verified IG handle binding)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isManager());
+      allow list: if isManager();
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming()) &&
+        incoming().uid == request.auth.uid && incoming().createdAt == request.time &&
+        (
+          incoming().verifiedIgHandle == '' ||
+          exists(/databases/$(database)/documents/igVerifiedHandles/$(incoming().verifiedIgHandle))
+        );
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming()) &&
+        incoming().uid == existing().uid && incoming().email == existing().email &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'verifiedIgHandle']) &&
+        (
+          incoming().verifiedIgHandle == '' ||
+          exists(/databases/$(database)/documents/igVerifiedHandles/$(incoming().verifiedIgHandle))
+        );
+      allow delete: if isManager() && isValidId(userId);
+    }
+  }
+}

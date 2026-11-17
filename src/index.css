@@ -1,0 +1,217 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  /* Default Dark Theme 1: Obsidian Orange (Deep Stadium Night & Foxes Burnt Orange) */
+  :root,
+  :root[data-theme="obsidian_orange"] {
+    color-scheme: dark;
+    --font-display: "Barlow Condensed", sans-serif;
+    --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+    --fx-bg: #0B0F17;
+    --fx-bg-alt: #121824;
+    --fx-surface: #182030;
+    --fx-surface-hover: #1E283B;
+    --fx-input-bg: #0F1520;
+    --fx-header: rgba(11, 15, 23, 0.92);
+    --fx-footer: #090C12;
+    --fx-border: #263246;
+    --fx-border-strong: #364661;
+
+    --fx-text: #F8FAFC;
+    --fx-text-secondary: #CBD5E1;
+    --fx-text-muted: #94A3B8;
+
+    --fx-accent: #C2410C;
+    --fx-accent-hover: #9A3412;
+    --fx-accent-text: #FB923C;
+    --fx-accent-soft: rgba(251, 146, 60, 0.14);
+    --fx-accent-border: rgba(251, 146, 60, 0.34);
+    --fx-accent-fg: #FDBA74;
+
+    --fx-win: #34D399;
+    --fx-win-soft: rgba(52, 211, 153, 0.13);
+    --fx-win-border: rgba(52, 211, 153, 0.32);
+    --fx-loss: #F87171;
+    --fx-loss-soft: rgba(248, 113, 113, 0.13);
+    --fx-loss-border: rgba(248, 113, 113, 0.32);
+    --fx-warn: #FBBF24;
+    --fx-warn-soft: rgba(251, 191, 36, 0.13);
+    --fx-warn-border: rgba(251, 191, 36, 0.32);
+    --fx-silver-soft: rgba(148, 163, 184, 0.14);
+    --fx-silver-border: rgba(148, 163, 184, 0.3);
+  }
+
+  /* Dark Theme 2: Midnight Pitch (Deep Stadium Pine & Emerald Turf) */
+  :root[data-theme="midnight_emerald"] {
+    color-scheme: dark;
+    --fx-bg: #07110D;
+    --fx-bg-alt: #0C1A14;
+    --fx-surface: #11231B;
+    --fx-surface-hover: #162D23;
+    --fx-input-bg: #0A1611;
+    --fx-header: rgba(7, 17, 13, 0.92);
+    --fx-footer: #050D0A;
+    --fx-border: #1E3B2E;
+    --fx-border-strong: #2C5442;
+
+    --fx-text: #F4FAF7;
+    --fx-text-secondary: #C6DCD1;
+    --fx-text-muted: #8EB2A0;
+
+    --fx-accent: #047857;
+    --fx-accent-hover: #065F46;
+    --fx-accent-text: #34D399;
+    --fx-accent-soft: rgba(52, 211, 153, 0.13);
+    --fx-accent-border: rgba(52, 211, 153, 0.32);
+    --fx-accent-fg: #6EE7B7;
+
+    --fx-win: #34D399;
+    --fx-win-soft: rgba(52, 211, 153, 0.14);
+    --fx-win-border: rgba(52, 211, 153, 0.34);
+    --fx-loss: #F87171;
+    --fx-loss-soft: rgba(248, 113, 113, 0.13);
+    --fx-loss-border: rgba(248, 113, 113, 0.32);
+    --fx-warn: #FBBF24;
+    --fx-warn-soft: rgba(251, 191, 36, 0.13);
+    --fx-warn-border: rgba(251, 191, 36, 0.32);
+    --fx-silver-soft: rgba(148, 163, 184, 0.14);
+    --fx-silver-border: rgba(148, 163, 184, 0.3);
+  }
+
+  /* Dark Theme 3: Royal Night (Midnight Navy & Cobalt/Gold) */
+  :root[data-theme="royal_navy"] {
+    color-scheme: dark;
+    --fx-bg: #091022;
+    --fx-bg-alt: #101A33;
+    --fx-surface: #152240;
+    --fx-surface-hover: #1B2B50;
+    --fx-input-bg: #0D162C;
+    --fx-header: rgba(9, 16, 34, 0.92);
+    --fx-footer: #070D1B;
+    --fx-border: #24355B;
+    --fx-border-strong: #334A7C;
+
+    --fx-text: #F8FAFC;
+    --fx-text-secondary: #CBD5E1;
+    --fx-text-muted: #94A3B8;
+
+    --fx-accent: #1D4ED8;
+    --fx-accent-hover: #1E40AF;
+    --fx-accent-text: #60A5FA;
+    --fx-accent-soft: rgba(96, 165, 250, 0.14);
+    --fx-accent-border: rgba(96, 165, 250, 0.34);
+    --fx-accent-fg: #93C5FD;
+
+    --fx-win: #34D399;
+    --fx-win-soft: rgba(52, 211, 153, 0.13);
+    --fx-win-border: rgba(52, 211, 153, 0.32);
+    --fx-loss: #F87171;
+    --fx-loss-soft: rgba(248, 113, 113, 0.13);
+    --fx-loss-border: rgba(248, 113, 113, 0.32);
+    --fx-warn: #FBBF24;
+    --fx-warn-soft: rgba(251, 191, 36, 0.13);
+    --fx-warn-border: rgba(251, 191, 36, 0.32);
+    --fx-silver-soft: rgba(148, 163, 184, 0.14);
+    --fx-silver-border: rgba(148, 163, 184, 0.3);
+  }
+
+  /* Dark Theme 4: Crimson Floodlight (Deep Charcoal & Matchday Crimson) */
+  :root[data-theme="crimson_slate"] {
+    color-scheme: dark;
+    --fx-bg: #110D10;
+    --fx-bg-alt: #1A1317;
+    --fx-surface: #221A1F;
+    --fx-surface-hover: #2C2128;
+    --fx-input-bg: #161014;
+    --fx-header: rgba(17, 13, 16, 0.92);
+    --fx-footer: #0D090B;
+    --fx-border: #362831;
+    --fx-border-strong: #4B3744;
+
+    --fx-text: #FAF7F9;
+    --fx-text-secondary: #D6CCD2;
+    --fx-text-muted: #A697A0;
+
+    --fx-accent: #B91C1C;
+    --fx-accent-hover: #991B1B;
+    --fx-accent-text: #FB7185;
+    --fx-accent-soft: rgba(251, 113, 133, 0.14);
+    --fx-accent-border: rgba(251, 113, 133, 0.34);
+    --fx-accent-fg: #FDA4AF;
+
+    --fx-win: #34D399;
+    --fx-win-soft: rgba(52, 211, 153, 0.13);
+    --fx-win-border: rgba(52, 211, 153, 0.32);
+    --fx-loss: #FCA5A5;
+    --fx-loss-soft: rgba(248, 113, 113, 0.13);
+    --fx-loss-border: rgba(248, 113, 113, 0.32);
+    --fx-warn: #FBBF24;
+    --fx-warn-soft: rgba(251, 191, 36, 0.13);
+    --fx-warn-border: rgba(251, 191, 36, 0.32);
+    --fx-silver-soft: rgba(166, 151, 160, 0.14);
+    --fx-silver-border: rgba(166, 151, 160, 0.3);
+  }
+
+  /* Light Theme (Single Light Option): Daylight Ivory */
+  :root[data-theme="light_ivory"] {
+    color-scheme: light;
+    --fx-bg: #F4F6F4;
+    --fx-bg-alt: #EAEFEA;
+    --fx-surface: #FFFFFF;
+    --fx-surface-hover: #F7FAF8;
+    --fx-input-bg: #FFFFFF;
+    --fx-header: rgba(255, 255, 255, 0.92);
+    --fx-footer: #ECEFEA;
+    --fx-border: #D9E2DC;
+    --fx-border-strong: #C2D0C7;
+
+    --fx-text: #0F172A;
+    --fx-text-secondary: #334155;
+    --fx-text-muted: #475569;
+
+    --fx-accent: #047857;
+    --fx-accent-hover: #065F46;
+    --fx-accent-text: #047857;
+    --fx-accent-soft: rgba(4, 120, 87, 0.09);
+    --fx-accent-border: rgba(4, 120, 87, 0.28);
+    --fx-accent-fg: #065F46;
+
+    --fx-win: #047857;
+    --fx-win-soft: rgba(4, 120, 87, 0.11);
+    --fx-win-border: rgba(4, 120, 87, 0.28);
+    --fx-loss: #DC2626;
+    --fx-loss-soft: rgba(220, 38, 38, 0.1);
+    --fx-loss-border: rgba(220, 38, 38, 0.28);
+    --fx-warn: #B45309;
+    --fx-warn-soft: rgba(180, 83, 9, 0.1);
+    --fx-warn-border: rgba(180, 83, 9, 0.28);
+    --fx-silver-soft: rgba(100, 116, 139, 0.1);
+    --fx-silver-border: rgba(100, 116, 139, 0.24);
+  }
+
+  html {
+    font-family: var(--font-sans);
+    scroll-behavior: smooth;
+    background-color: var(--fx-bg);
+    color: var(--fx-text);
+  }
+
+  body {
+    background-color: var(--fx-bg);
+    color: var(--fx-text);
+    letter-spacing: 0.01em;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  h1, h2, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}

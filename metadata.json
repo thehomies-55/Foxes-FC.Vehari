@@ -1,0 +1,6 @@
+{
+  "name": "Foxes FC.vehari",
+  "description": "Official football club management, matchday fixtures, player statistics, tournament honors, discipline ledger, newsroom, and community Discord hub for Foxes FC Vehari.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
