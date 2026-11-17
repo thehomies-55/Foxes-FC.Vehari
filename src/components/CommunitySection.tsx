@@ -270,7 +270,17 @@ export const CommunitySection: React.FC<CommunitySectionProps> = ({
   const handleSaveNews = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEdit || !user) return;
+    const cleanTitle = newsTitle.trim().slice(0, 140);
+    const cleanBody = newsBody.trim().slice(0, 4000);
     const cleanPhoto = newsPhotoUrl.trim();
+    if (cleanTitle.length < 2) {
+      onNotify('Headline must be at least 2 characters.');
+      return;
+    }
+    if (cleanBody.length < 5) {
+      onNotify('Article body must be at least 5 characters.');
+      return;
+    }
     if (cleanPhoto.length > 245000) {
       onNotify('News photo exceeds maximum size. Please upload a smaller photo or paste an image URL.');
       return;
@@ -282,9 +292,9 @@ export const CommunitySection: React.FC<CommunitySectionProps> = ({
     try {
       if (editingNewsPost) {
         await updateDoc(doc(db, 'news', editingNewsPost.id), {
-          title: newsTitle.trim(),
+          title: cleanTitle,
           category: newsCategory,
-          body: newsBody.trim(),
+          body: cleanBody,
           photoUrl: cleanPhoto,
           publishedDate: editingNewsPost.publishedDate || todayIso,
           updatedAt: serverTimestamp(),
@@ -294,9 +304,9 @@ export const CommunitySection: React.FC<CommunitySectionProps> = ({
       } else {
         const newId = `news_${Date.now()}`;
         await setDoc(doc(db, 'news', newId), {
-          title: newsTitle.trim(),
+          title: cleanTitle,
           category: newsCategory,
-          body: newsBody.trim(),
+          body: cleanBody,
           photoUrl: cleanPhoto,
           authorName: isManager ? 'Fox (Club Manager)' : user.displayName || 'Authorized Editor',
           authorUid: user.uid,
@@ -348,9 +358,24 @@ export const CommunitySection: React.FC<CommunitySectionProps> = ({
         return;
       }
 
-      await updateDoc(doc(db, 'users', user.uid), {
-        verifiedIgHandle: handleKey,
-      });
+      const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists()) {
+        await updateDoc(userRef, {
+          verifiedIgHandle: handleKey,
+        });
+      } else if (user.email) {
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || user.email.split('@')[0],
+          verifiedIgHandle: handleKey,
+          createdAt: serverTimestamp(),
+        });
+      } else {
+        onNotify('Your account must have a verified email to link a club Instagram ID.');
+        return;
+      }
       onUpdateVerifiedIgHandle(handleKey);
       setIgVerifyInput('');
       onNotify(`Instagram ID @${handleKey} verified! You can now chat in Club Members Discord.`);

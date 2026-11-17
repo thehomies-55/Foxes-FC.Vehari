@@ -370,6 +370,8 @@ export default function App() {
         setActivePage('home');
       }
       showToast('Signed out.');
+    } catch {
+      showToast('Could not sign out cleanly. Please try again.');
     } finally {
       setAuthLoading(false);
     }
@@ -386,6 +388,8 @@ export default function App() {
     try {
       await seedFoxesClubData(user.uid);
       showToast('Initialized Foxes FC.vehari starter squad, fixtures, series, and discipline records.');
+    } catch {
+      showToast('Could not initialize starter club data. Please check permissions and retry.');
     } finally {
       setSeeding(false);
     }

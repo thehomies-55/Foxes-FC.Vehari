@@ -284,19 +284,27 @@ export const SeriesSection: React.FC<SeriesSectionProps> = ({
   const handleSaveSeries = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEdit) return;
+    const cleanTitle = title.trim().slice(0, 100);
+    if (cleanTitle.length < 2) {
+      onNotify('Series or tournament title must be at least 2 characters.');
+      return;
+    }
     setSaving(true);
 
     const seriesId =
       editingSeries?.id ||
-      `ser_${title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'event'}_${Date.now()}`;
+      `ser_${cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'event'}_${Date.now()}`.slice(0, 120);
 
-    const parsedTeams = parseTeamsList(teamsSummary, undefined, category);
-    const descriptor = formatTournamentDescriptor(format, roundRobinMeetings, hybridGroupSize);
+    const parsedTeams = parseTeamsList(teamsSummary, undefined, category).slice(0, 32);
+    const rawTeamsSummary = parsedTeams.join(', ');
+    const safeTeamsSummary =
+      rawTeamsSummary.length > 160 ? `${rawTeamsSummary.slice(0, 157)}...` : rawTeamsSummary;
+    const descriptor = formatTournamentDescriptor(format, roundRobinMeetings, hybridGroupSize).slice(0, 60);
     const suggestion = computeSuggestedPots(seriesId, matches, players);
     const chosenPots = players.find((p) => p.id === officialPotsId);
 
     const existingMatches = editingSeries?.tournamentMatches || [];
-    const nextTournamentMatches =
+    const nextTournamentMatches = (
       regenerateOnSave || existingMatches.length === 0
         ? generateTournamentFixtures({
             teams: parsedTeams,
@@ -307,36 +315,38 @@ export const SeriesSection: React.FC<SeriesSectionProps> = ({
             startDate,
             clubName: clubProfile?.shortName || 'Foxes FC',
           })
-        : existingMatches;
+        : existingMatches
+    ).slice(0, 150);
 
     const payload = {
-      title: title.trim(),
+      title: cleanTitle,
       category,
       format,
       roundRobinMeetings,
       hybridGroupSize,
       teams: parsedTeams,
-      winnerName: winnerName.trim(),
+      winnerName: winnerName.trim().slice(0, 80),
       tournamentMatches: nextTournamentMatches,
       tournamentType: descriptor,
-      teamsSummary: parsedTeams.join(', '),
+      teamsSummary: safeTeamsSummary,
       placement,
-      startDate,
-      endDate,
+      startDate: startDate.slice(0, 30),
+      endDate: endDate.slice(0, 30),
       status,
-      suggestedPotsId: suggestion.suggestedPotsId,
-      suggestedPotsName: suggestion.suggestedPotsName,
-      officialPotsId: isManager ? officialPotsId : editingSeries?.officialPotsId || '',
-      officialPotsName: isManager
+      suggestedPotsId: suggestion.suggestedPotsId.slice(0, 128),
+      suggestedPotsName: suggestion.suggestedPotsName.slice(0, 80),
+      officialPotsId: (isManager ? officialPotsId : editingSeries?.officialPotsId || '').slice(0, 128),
+      officialPotsName: (isManager
         ? chosenPots?.name || ''
-        : editingSeries?.officialPotsName || '',
-      topScorerName: topScorerName.trim(),
-      topScorerStat: topScorerStat.trim(),
-      topAssisterName: topAssisterName.trim(),
-      topAssisterStat: topAssisterStat.trim(),
-      bestKeeperName: bestKeeperName.trim(),
-      bestDefenderName: bestDefenderName.trim(),
-      summary: summary.trim(),
+        : editingSeries?.officialPotsName || ''
+      ).slice(0, 80),
+      topScorerName: topScorerName.trim().slice(0, 80),
+      topScorerStat: topScorerStat.trim().slice(0, 40),
+      topAssisterName: topAssisterName.trim().slice(0, 80),
+      topAssisterStat: topAssisterStat.trim().slice(0, 40),
+      bestKeeperName: bestKeeperName.trim().slice(0, 80),
+      bestDefenderName: bestDefenderName.trim().slice(0, 80),
+      summary: summary.trim().slice(0, 500),
     };
 
     try {
@@ -512,8 +522,8 @@ export const SeriesSection: React.FC<SeriesSectionProps> = ({
       !nextEval.hasPendingTiebreaker;
 
     const updateDocData: Record<string, unknown> = {
-      tournamentMatches: updatedSlots,
-      winnerName: allDone ? nextEval.resolvedWinnerName : series.winnerName || '',
+      tournamentMatches: updatedSlots.slice(0, 150),
+      winnerName: (allDone ? nextEval.resolvedWinnerName : series.winnerName || '').slice(0, 80),
       status: allDone && nextEval.resolvedWinnerName ? 'completed' : 'ongoing',
       updatedAt: serverTimestamp(),
     };

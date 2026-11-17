@@ -214,7 +214,13 @@ export const MatchdaySection: React.FC<MatchdaySectionProps> = ({
   const handleSaveMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canEdit || !currentUid) return;
-    setSaving(true);
+
+    const cleanVenue = venue.trim().slice(0, 120);
+    const cleanTime = timeDisplay.trim().slice(0, 20);
+    if (!cleanVenue || !cleanTime) {
+      onNotify('Please enter a valid kickoff time and match venue.');
+      return;
+    }
 
     const selectedSeries = seriesList.find((s) => s.id === seriesId);
     const chosenPotmPlayer = players.find((p) => p.id === officialPotmId);
@@ -227,30 +233,39 @@ export const MatchdaySection: React.FC<MatchdaySectionProps> = ({
     const existingOpponent = recentOpponents.find(
       (o) => o.key === normalizeOpponentKey(normalizedInput)
     );
-    const canonicalOpponentName = existingOpponent ? existingOpponent.teamName : normalizedInput;
+    const canonicalOpponentName = (existingOpponent ? existingOpponent.teamName : normalizedInput).slice(0, 80);
+
+    if (matchType === 'external' && !canonicalOpponentName) {
+      onNotify('Please enter an opponent team name.');
+      return;
+    }
+
+    const clampScore = (v: unknown) => Math.max(0, Math.min(99, Math.round(Number(v) || 0)));
+
+    setSaving(true);
 
     const payload = {
       matchType,
       opponentName: matchType === 'external' ? canonicalOpponentName : '',
-      subTeamA: matchType === 'inter_club' ? subTeamA.trim().toUpperCase() : '',
-      subTeamB: matchType === 'inter_club' ? subTeamB.trim().toUpperCase() : '',
+      subTeamA: matchType === 'inter_club' ? (subTeamA.trim().toUpperCase() || 'ORANGE').slice(0, 60) : '',
+      subTeamB: matchType === 'inter_club' ? (subTeamB.trim().toUpperCase() || 'OBSIDIAN').slice(0, 60) : '',
       dateIso,
-      dateDisplay: formatDateDisplay(dateIso),
-      timeDisplay: timeDisplay.trim(),
-      venue: venue.trim(),
+      dateDisplay: formatDateDisplay(dateIso).slice(0, 20),
+      timeDisplay: cleanTime,
+      venue: cleanVenue,
       status,
-      goalsFor: matchType === 'external' ? Number(goalsFor) || 0 : 0,
-      goalsAgainst: matchType === 'external' ? Number(goalsAgainst) || 0 : 0,
-      subTeamAScore: matchType === 'inter_club' ? Number(subTeamAScore) || 0 : 0,
-      subTeamBScore: matchType === 'inter_club' ? Number(subTeamBScore) || 0 : 0,
-      seriesId: seriesId || '',
-      competitionName: selectedSeries?.title || competitionName.trim() || 'Club Match',
-      performances,
-      suggestedPotmId: liveSuggestion.suggestedPotmId,
-      suggestedPotmName: liveSuggestion.suggestedPotmName,
-      suggestedPotmReason: liveSuggestion.suggestedPotmReason,
-      officialPotmId: safeOfficialId,
-      officialPotmName: safeOfficialName,
+      goalsFor: matchType === 'external' ? clampScore(goalsFor) : 0,
+      goalsAgainst: matchType === 'external' ? clampScore(goalsAgainst) : 0,
+      subTeamAScore: matchType === 'inter_club' ? clampScore(subTeamAScore) : 0,
+      subTeamBScore: matchType === 'inter_club' ? clampScore(subTeamBScore) : 0,
+      seriesId: (seriesId || '').slice(0, 128),
+      competitionName: (selectedSeries?.title || competitionName.trim() || 'Club Match').slice(0, 80),
+      performances: performances.slice(0, 30),
+      suggestedPotmId: liveSuggestion.suggestedPotmId.slice(0, 128),
+      suggestedPotmName: liveSuggestion.suggestedPotmName.slice(0, 80),
+      suggestedPotmReason: liveSuggestion.suggestedPotmReason.slice(0, 200),
+      officialPotmId: safeOfficialId.slice(0, 128),
+      officialPotmName: safeOfficialName.slice(0, 80),
     };
 
     try {

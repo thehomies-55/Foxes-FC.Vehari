@@ -470,34 +470,44 @@ export const SquadSection: React.FC<SquadSectionProps> = ({
     e.preventDefault();
     if (!canEdit) return;
 
+    const cleanName = name.trim().slice(0, 80);
+    if (cleanName.length < 2) {
+      onNotify('Player name must be at least 2 characters.');
+      return;
+    }
+
+    const toNonNegInt = (v: unknown) => Math.max(0, Math.round(Number(v) || 0));
+    const safeExtGames = toNonNegInt(extGames);
+    const safeIcGames = toNonNegInt(icGames);
     const isDefOrGk = isDefensiveOrKeeperPosition(position);
+
     const payload = {
-      name: name.trim(),
-      age: Number(age) || 20,
-      jerseyNumber: Number(jerseyNumber) || 1,
+      name: cleanName,
+      age: Math.max(10, Math.min(65, Math.round(Number(age) || 20))),
+      jerseyNumber: Math.max(1, Math.min(99, Math.round(Number(jerseyNumber) || 1))),
       position,
       photoUrl: photoUrl.trim() || getDefaultKitForPosition(position),
-      extGames: Number(extGames) || 0,
-      extGoals: Number(extGoals) || 0,
-      extAssists: Number(extAssists) || 0,
-      extRatingSum: Number(((Number(extGames) || 0) * (Number(extAvgRating) || 0)).toFixed(2)),
-      extPenalties: Number(extPenalties) || 0,
-      extRedCards: Number(extRedCards) || 0,
-      extYellowCards: Number(extYellowCards) || 0,
-      extPotm: Number(extPotm) || 0,
-      extCleanSheets: isDefOrGk ? Number(extCleanSheets) || 0 : 0,
-      icGames: Number(icGames) || 0,
-      icGoals: Number(icGoals) || 0,
-      icAssists: Number(icAssists) || 0,
-      icRatingSum: Number(((Number(icGames) || 0) * (Number(icAvgRating) || 0)).toFixed(2)),
-      icPenalties: Number(icPenalties) || 0,
-      icRedCards: Number(icRedCards) || 0,
-      icYellowCards: Number(icYellowCards) || 0,
-      icPotm: Number(icPotm) || 0,
-      icCleanSheets: isDefOrGk ? Number(icCleanSheets) || 0 : 0,
-      hatTricks: Number(hatTricks) || 0,
-      bestSingleGameGoals: Number(bestSingleGameGoals) || 0,
-      bestSingleGameAssists: Number(bestSingleGameAssists) || 0,
+      extGames: safeExtGames,
+      extGoals: toNonNegInt(extGoals),
+      extAssists: toNonNegInt(extAssists),
+      extRatingSum: Math.max(0, Number((safeExtGames * Math.max(0, Number(extAvgRating) || 0)).toFixed(2))),
+      extPenalties: toNonNegInt(extPenalties),
+      extRedCards: toNonNegInt(extRedCards),
+      extYellowCards: toNonNegInt(extYellowCards),
+      extPotm: toNonNegInt(extPotm),
+      extCleanSheets: isDefOrGk ? toNonNegInt(extCleanSheets) : 0,
+      icGames: safeIcGames,
+      icGoals: toNonNegInt(icGoals),
+      icAssists: toNonNegInt(icAssists),
+      icRatingSum: Math.max(0, Number((safeIcGames * Math.max(0, Number(icAvgRating) || 0)).toFixed(2))),
+      icPenalties: toNonNegInt(icPenalties),
+      icRedCards: toNonNegInt(icRedCards),
+      icYellowCards: toNonNegInt(icYellowCards),
+      icPotm: toNonNegInt(icPotm),
+      icCleanSheets: isDefOrGk ? toNonNegInt(icCleanSheets) : 0,
+      hatTricks: toNonNegInt(hatTricks),
+      bestSingleGameGoals: toNonNegInt(bestSingleGameGoals),
+      bestSingleGameAssists: toNonNegInt(bestSingleGameAssists),
     };
 
     if (payload.photoUrl.length > 195000) {
